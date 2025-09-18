@@ -1,6 +1,6 @@
 # MiaoEyes
 
-![MiaoEyes Logo](https://via.placeholder.com/150)  <!-- 可以替换为实际的logo图片 -->
+![MiaoEyes Logo](https://raw.githubusercontent.com/oyxning/MiaoEyes/refs/heads/main/miaoeyes.png)  <!-- 实际的logo图片 -->
 
 ## 项目简介
 
