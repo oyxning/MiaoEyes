@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  miaoeyes:
+    build: .
+    container_name: miaoeyes
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - JWT_SECRET=your-secure-secret-key
+      - SESSION_SECRET=your-session-secret-key
+      # 域名跳转配置
+      - DOMAIN_REDIRECT_ENABLED=true
+      - TARGET_DOMAIN=your-target-domain.com
+    volumes:
+      - ./config:/app/config
+    restart: always

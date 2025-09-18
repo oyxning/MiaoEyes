@@ -1,0 +1,64 @@
+{
+  "verification": {
+    "enabled": true,
+    "difficulty": "medium",
+    "timeout": 30000,
+    "maxAttempts": 5,
+    "tokenExpiry": 3600
+  },
+  "domainRedirect": {
+    "enabled": false,
+    "targetDomain": "",
+    "redirectDomains": [],
+    "excludePaths": [
+      "/api",
+      "/static",
+      "/verify",
+      "/favicon.ico"
+    ]
+  },
+  "challenges": {
+    "enabledTypes": [
+      "captcha",
+      "puzzle"
+    ],
+    "defaultType": "captcha",
+    "captcha": {
+      "length": 4,
+      "noiseLevel": 3,
+      "fontSize": 30,
+      "width": 120,
+      "height": 40
+    },
+    "puzzle": {
+      "difficulty": "medium",
+      "timeout": 60000
+    }
+  },
+  "security": {
+    "rateLimiting": {
+      "enabled": true,
+      "maxRequests": 100,
+      "windowMs": 900000
+    },
+    "whitelist": {
+      "userAgents": [],
+      "ipAddresses": []
+    },
+    "blacklist": {
+      "userAgents": [],
+      "ipAddresses": []
+    }
+  },
+  "logging": {
+    "level": "info",
+    "enabled": true,
+    "fileLogging": false,
+    "logFilePath": "../logs/miaoeyes.log"
+  },
+  "other": {
+    "version": "1.0.0",
+    "maintainer": "MiaoEyes Team",
+    "allowPublicAccess": true
+  }
+}

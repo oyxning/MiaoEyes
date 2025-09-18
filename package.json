@@ -1,0 +1,56 @@
+{
+  "name": "miaoeyes",
+  "version": "1.0.0",
+  "description": "MiaoEyes - AI防火墙工具，类似于Anubis的Web验证服务",
+  "main": "src/server/server.js",
+  "scripts": {
+    "start": "node src/server/server.js",
+    "dev": "nodemon src/server/server.js",
+    "install-client": "cd src/client && npm install",
+    "build-client": "cd src/client && npm run build",
+    "dev-client": "cd src/client && npm run dev",
+    "build": "npm run build-client",
+    "test": "echo \"No tests specified\" && exit 0",
+    "lint": "eslint . --ext .js,.jsx",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "ai-firewall",
+    "bot-detection",
+    "captcha",
+    "verification",
+    "security"
+  ],
+  "author": "LumineStory",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.0.3",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.0",
+    "uuid": "^9.0.0",
+    "morgan": "^1.10.0",
+    "helmet": "^6.0.1",
+    "express-rate-limit": "^6.7.0",
+    "express-session": "^1.17.3",
+    "crypto-js": "^4.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "eslint": "^8.39.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.8"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oyxning/miaoeyes.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oyxning/miaoeyes/issues"
+  },
+  "homepage": "https://github.com/oyxning/miaoeyes#readme"
+}
