@@ -32,13 +32,67 @@ MiaoEyes是一款类似于Anubis的Web AI防火墙工具，用于识别和阻止
 
 ## 快速开始
 
-### 前提条件
+MiaoEyes提供了两种部署方式：一键部署（推荐）和手动部署。
 
-- Node.js (v14.0.0 或更高版本)
-- npm 或 yarn
+### 一键部署（推荐）
+
+MiaoEyes提供了简便的一键部署脚本，支持Windows和Linux/Mac系统，只需几分钟即可完成部署。
+
+#### 前提条件
+
+- Docker 和 docker-compose
 - 已配置的域名（用于部署到生产环境）
 
-### 安装步骤
+#### Linux/Mac系统
+
+1. 克隆仓库
+
+```bash
+git clone https://github.com/oyxning/miaoeyes.git
+cd miaoeyes
+```
+
+2. 运行一键部署脚本
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+3. 根据提示输入必要的配置信息：
+   - 目标域名（验证后重定向的域名）
+   - JWT密钥（按回车使用默认值）
+   - 会话密钥（按回车使用默认值）
+   - 映射端口（默认: 3000）
+
+4. 部署完成后，可以通过 http://localhost:3000 访问Web管理界面
+
+#### Windows系统
+
+1. 克隆仓库
+
+```powershell
+git clone https://github.com/oyxning/miaoeyes.git
+cd miaoeyes
+```
+
+2. 运行一键部署脚本（以管理员身份运行PowerShell）
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; .\deploy.ps1
+```
+
+3. 根据提示输入必要的配置信息：
+   - 目标域名（验证后重定向的域名）
+   - JWT密钥（按回车使用默认值）
+   - 会话密钥（按回车使用默认值）
+   - 映射端口（默认: 3000）
+
+4. 部署完成后，可以通过 http://localhost:3000 访问Web管理界面
+
+### 手动部署方式
+
+#### 安装步骤
 
 1. **克隆仓库**
 
@@ -72,7 +126,7 @@ npm run dev
 
 服务器将在 http://localhost:3000 启动。
 
-### 生产环境构建
+#### 生产环境构建
 
 ```bash
 # 安装客户端依赖
@@ -185,118 +239,36 @@ GET /verify/status/:token
 
 MiaoEyes支持以下配置选项，可以通过Web管理界面或直接编辑 `config/config.json` 文件进行修改：
 
-- **验证设置**
-  - `enabled`: 是否启用验证
-  - `difficulty`: 验证难度 (easy/medium/hard)
-  - `timeout`: 挑战超时时间（毫秒）
-  - `maxAttempts`: 最大尝试次数
+### 验证设置
+- `enabled`: 是否启用验证
+- `difficulty`: 验证难度 (easy/medium/hard)
+- `timeout`: 挑战超时时间（毫秒）
+- `maxAttempts`: 最大尝试次数
 
-- **安全设置**
-  - `rateLimiting.enabled`: 是否启用速率限制
-  - `rateLimiting.maxRequests`: 最大请求数
-  - `rateLimiting.windowMs`: 时间窗口（毫秒）
-  - `allowedIPs`: 允许的IP地址列表
-  - `blockedIPs`: 阻止的IP地址列表
+### 安全设置
+- `rateLimiting.enabled`: 是否启用速率限制
+- `rateLimiting.maxRequests`: 最大请求数
+- `rateLimiting.windowMs`: 时间窗口（毫秒）
+- `allowedIPs`: 允许的IP地址列表
+- `blockedIPs`: 阻止的IP地址列表
 
-- **挑战设置**
-  - `type`: 支持的挑战类型列表
-  - `defaultType`: 默认挑战类型
+### 挑战设置
+- `type`: 支持的挑战类型列表
+- `defaultType`: 默认挑战类型
 
-- **白名单设置**
-  - `userAgents`: User-Agent白名单
-  - `ipAddresses`: IP地址白名单
+### 白名单设置
+- `userAgents`: User-Agent白名单
+- `ipAddresses`: IP地址白名单
 
-## 一键部署
+### 域名跳转设置（新功能）
+MiaoEyes支持配置域名跳转功能，用于将特定域名的请求重定向到目标域名：
 
-### 使用Docker部署
+- `domainRedirect.enabled`: 是否启用域名跳转功能
+- `domainRedirect.targetDomain`: 验证成功后重定向的目标域名
+- `domainRedirect.redirectDomains`: 需要进行重定向的域名列表
+- `domainRedirect.excludePaths`: 不需要进行重定向的路径列表
 
-MiaoEyes支持使用Docker进行一键部署，简化部署流程。
-
-#### 前提条件
-- 安装Docker和Docker Compose
-
-#### 部署步骤
-
-1. **创建docker-compose.yml文件**
-
-在项目根目录创建`docker-compose.yml`文件：
-
-```yaml
-version: '3'
-
-services:
-  miaoeyes:
-    build: .
-    container_name: miaoeyes
-    ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - NODE_ENV=production
-      - JWT_SECRET=your-secure-secret-key
-      - SESSION_SECRET=your-session-secret-key
-      # 域名跳转配置
-      - DOMAIN_REDIRECT_ENABLED=true
-      - TARGET_DOMAIN=your-target-domain.com
-    volumes:
-      - ./config:/app/config
-    restart: always
-```
-
-2. **创建Dockerfile**
-
-在项目根目录创建`Dockerfile`文件：
-
-```dockerfile
-FROM node:16-alpine
-
-WORKDIR /app
-
-# 复制项目文件
-COPY package*.json ./
-COPY src ./src
-COPY public ./public
-COPY config ./config
-
-# 安装依赖
-RUN npm install --production
-
-# 安装客户端依赖并构建
-RUN cd src/client && npm install && npm run build
-
-# 设置环境变量
-ENV NODE_ENV=production
-
-# 暴露端口
-EXPOSE 3000
-
-# 启动应用
-CMD ["npm", "start"]
-```
-
-3. **启动容器**
-
-```bash
-docker-compose up -d
-```
-
-MiaoEyes将在`http://localhost:3000`启动，并且根据配置进行域名跳转。
-
-## 域名跳转功能
-
-MiaoEyes支持域名跳转功能，用户访问配置的域名时，会先经过验证，验证通过后才会跳转到目标网站。
-
-### 配置方法
-
-1. **修改环境变量**
-
-在`config/.env`文件中添加以下配置：
-
-```env
-# 域名跳转配置
-DOMAIN_REDIRECT_ENABLED=true
-TARGET_DOMAIN=your-target-domain.com # 设置为您想要跳转到的域名
-```
+这些配置可以通过Web管理界面的"配置"页面进行设置，也可以在一键部署时通过环境变量进行配置。
 
 2. **更新DNS配置**
 
