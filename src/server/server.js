@@ -62,18 +62,12 @@ const { _getConfigData } = require('./controllers/configController');
 const verificationController = require('./controllers/verificationController');
 
 // 获取域名跳转配置
-function getDomainRedirectConfig() {
-  const config = _getConfigData();
-  return {
-    enabled: config.domainRedirect?.enabled || false,
-    targetDomain: config.domainRedirect?.targetDomain || '',
-    redirectDomains: config.domainRedirect?.redirectDomains || [],
-    excludePaths: config.domainRedirect?.excludePaths || ['/api', '/static', '/verify', '/favicon.ico']
-  };
-}
-
-// 获取域名跳转配置
-const domainRedirectConfig = getDomainRedirectConfig();
+const domainRedirectConfig = {
+  enabled: false, // 暂时禁用域名重定向功能
+  targetDomain: '',
+  redirectDomains: [],
+  excludePaths: ['/api', '/static', '/verify', '/favicon.ico']
+};
 
 // 检查是否启用了域名跳转功能
 if (domainRedirectConfig.enabled && domainRedirectConfig.targetDomain) {
@@ -270,6 +264,29 @@ if (NODE_ENV === 'production') {
   } else {
     console.error('Client build not found at:', clientBuildPath);
   }
+}
+
+// 开发环境下的前端重定向
+if (NODE_ENV === 'development') {
+  // 对于根路径请求，直接访问前端开发服务器
+  app.get('/', (req, res) => {
+    res.redirect('http://localhost:5173/');
+  });
+  
+  // 对于其他路径，保持原有的重定向逻辑
+  app.get('*', (req, res, next) => {
+    // 跳过已定义的路由
+    if (req.path.startsWith('/api') || 
+        req.path.startsWith('/verify') || 
+        req.path.startsWith('/static') || 
+        req.path === '/favicon.ico' ||
+        req.path === '/verify-page' ||
+        req.path === '/') {
+      return next();
+    }
+    // 重定向到前端开发服务器
+    res.redirect(`http://localhost:5173${req.originalUrl}`);
+  });
 }
 
 // 错误处理中间件

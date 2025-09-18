@@ -11,4 +11,7 @@ router.post('/verify', verificationController.verifyResponse);
 // 检查验证状态
 router.get('/status/:token', verificationController.getVerificationStatus);
 
+// 处理自动验证请求
+router.get('/auto-verify', verificationController.handleAutoVerify);
+
 module.exports = router;

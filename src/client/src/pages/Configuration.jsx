@@ -278,6 +278,25 @@ const Configuration = () => {
               </div>
             </div>
             
+            {/* 自动验证配置 */}
+            <div>
+              <Title level={5}>自动验证配置</Title>
+              <div className="space-y-4">
+                <Form.Item label="自动验证是否启用" name={['challenges', 'autoVerify', 'enabled']} valuePropName="checked">
+                  <Switch />
+                </Form.Item>
+                
+                <Form.Item label="可信度阈值" name={['challenges', 'autoVerify', 'threshold']}>
+                  <Slider min={0.5} max={0.95} step={0.05} tooltip={{ formatter: (value) => `${value * 100}%` }} />
+                  <span style={{ fontSize: '12px', color: '#8c8c8c' }}>设置自动验证通过的最小可信度，建议值: 70%</span>
+                </Form.Item>
+                
+                <Form.Item label="自动验证说明">
+                  <Alert message="自动验证功能" description="自动验证通过分析客户端特征、行为模式等信息，对访问者进行静默验证。验证通过的用户无需进行交互式验证，提高用户体验。" type="info" showIcon />
+                </Form.Item>
+              </div>
+            </div>
+            
             <Divider />
             
             {/* 安全设置 */}

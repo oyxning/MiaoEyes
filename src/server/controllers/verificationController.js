@@ -1,4 +1,4 @@
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const jwt = require('jsonwebtoken');
 const { updateStats } = require('./statsController');
 const { 
@@ -97,6 +97,38 @@ const createChallenge = (req, res) => {
       });
     }
     
+    // 检查是否请求自动验证
+    const autoVerify = req.query.autoVerify === 'true';
+    
+    if (autoVerify && config.challenges?.autoVerify?.enabled) {
+      // 执行自动验证检测
+      const isHumanLikely = performAutoVerificationCheck(req, config);
+      
+      if (isHumanLikely) {
+        // 自动验证通过，直接发放令牌
+        const verificationToken = jwt.sign(
+          {
+            challengeId: 'auto-verified',
+            verified: true,
+            timestamp: Date.now(),
+            autoVerified: true
+          },
+          process.env.JWT_SECRET || 'secret_key',
+          { expiresIn: `${config.verification.tokenExpiry || 3600}s` }
+        );
+        
+        updateStats('verified');
+        
+        return res.status(200).json({
+          challengeId: 'auto-verified',
+          challengeType: 'auto',
+          verified: true,
+          token: verificationToken,
+          timestamp: Date.now()
+        });
+      }
+    }
+    
     // 根据配置选择挑战类型
     const enabledTypes = config.challenges?.enabledTypes || ['captcha'];
     const defaultType = config.challenges?.defaultType || 'captcha';
@@ -123,7 +155,19 @@ const createChallenge = (req, res) => {
       ...challengeData,
       createdAt: Date.now(),
       attempts: 0,
-      verified: false
+      verified: false,
+      // 存储客户端信息用于后续验证分析
+      clientInfo: {
+        userAgent: req.headers['user-agent'] || '',
+        acceptLanguage: req.headers['accept-language'] || '',
+        ip: getClientIp(req),
+        referer: req.headers.referer || '',
+        screenSize: req.query.screenSize || '',
+        timezone: req.query.timezone || '',
+        plugins: req.query.plugins || '',
+        canvas: req.query.canvas || '',
+        webgl: req.query.webgl || ''
+      }
     };
     
     verificationSessions.set(challengeId, session);
@@ -140,11 +184,124 @@ const createChallenge = (req, res) => {
     res.status(200).json({
       challengeId: challengeId,
       challengeType: challengeType,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      requiresInteraction: true
     });
   } catch (error) {
     console.error('Error creating challenge:', error);
     res.status(500).json({ error: 'Failed to create verification challenge' });
+  }
+};
+
+// 执行自动验证检测
+const performAutoVerificationCheck = (req, config) => {
+  try {
+    // 获取配置的自动验证参数
+    const autoVerifyConfig = config.challenges?.autoVerify || {};
+    const threshold = autoVerifyConfig.threshold || 0.7; // 默认70%的可信度阈值
+    
+    // 收集客户端信息
+    const clientInfo = {
+      userAgent: req.headers['user-agent'] || '',
+      acceptLanguage: req.headers['accept-language'] || '',
+      ip: getClientIp(req),
+      referer: req.headers.referer || '',
+      screenSize: req.query.screenSize || '',
+      timezone: req.query.timezone || '',
+      plugins: req.query.plugins || '',
+      canvas: req.query.canvas || '',
+      webgl: req.query.webgl || '',
+      // 检查是否有鼠标移动、触摸事件等交互信息
+      interactionScore: parseFloat(req.query.interactionScore) || 0
+    };
+    
+    // 进行简单的自动化检测算法
+    let trustScore = 0;
+    
+    // 1. 检查用户代理字符串
+    const userAgent = clientInfo.userAgent.toLowerCase();
+    if (userAgent && !userAgent.includes('bot') && !userAgent.includes('crawler') && !userAgent.includes('spider')) {
+      trustScore += 0.2;
+    }
+    
+    // 2. 检查交互分数（如果有的话）
+    trustScore += Math.min(clientInfo.interactionScore * 0.3, 0.3);
+    
+    // 3. 检查屏幕尺寸和时区信息
+    if (clientInfo.screenSize && clientInfo.screenSize.includes('x') && 
+        parseInt(clientInfo.screenSize.split('x')[0]) > 600) {
+      trustScore += 0.15;
+    }
+    
+    if (clientInfo.timezone && clientInfo.timezone !== '0') {
+      trustScore += 0.15;
+    }
+    
+    // 4. 检查Canvas和WebGL指纹（如果提供了）
+    if (clientInfo.canvas && clientInfo.canvas.length > 10) {
+      trustScore += 0.1;
+    }
+    
+    if (clientInfo.webgl && clientInfo.webgl.length > 10) {
+      trustScore += 0.1;
+    }
+    
+    // 5. 检查引用来源
+    if (clientInfo.referer && clientInfo.referer.includes(config.domain || '')) {
+      trustScore += 0.1;
+    }
+    
+    // 如果信任分数高于阈值，则认为是人类访问者
+    return trustScore >= threshold;
+  } catch (error) {
+    console.error('Error in auto verification:', error);
+    // 出错时默认不通过自动验证
+    return false;
+  }
+};
+
+// 处理自动验证请求（用于前端发起的静默验证）
+const handleAutoVerify = (req, res) => {
+  try {
+    const config = _getConfigData();
+    
+    if (!config.challenges?.autoVerify?.enabled) {
+      return res.status(403).json({ error: 'Auto verification is disabled' });
+    }
+    
+    // 执行自动验证检测
+    const isHumanLikely = performAutoVerificationCheck(req, config);
+    
+    if (isHumanLikely) {
+      const verificationToken = jwt.sign(
+        {
+          challengeId: 'auto-verified',
+          verified: true,
+          timestamp: Date.now(),
+          autoVerified: true
+        },
+        process.env.JWT_SECRET || 'secret_key',
+        { expiresIn: `${config.verification.tokenExpiry || 3600}s` }
+      );
+      
+      updateStats('verified');
+      
+      return res.status(200).json({
+        verified: true,
+        token: verificationToken,
+        timestamp: Date.now()
+      });
+    } else {
+      // 自动验证失败，返回需要交互式验证的标志
+      return res.status(200).json({
+        verified: false,
+        requiresInteraction: true,
+        timestamp: Date.now()
+      });
+    }
+  } catch (error) {
+    console.error('Error in auto verify:', error);
+    res.status(500).json({ error: 'Failed to perform auto verification' });
   }
 };
 
@@ -308,6 +465,7 @@ module.exports = {
   createChallenge,
   verifyResponse,
   getVerificationStatus,
+  handleAutoVerify,
   // 用于测试的内部函数
   _getClientIp: getClientIp,
   _isRequestWhitelisted: isRequestWhitelisted

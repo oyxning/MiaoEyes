@@ -1,8 +1,11 @@
 {
   "name": "miaoeyes",
   "version": "1.0.0",
-  "description": "MiaoEyes - AI防火墙工具，类似于Anubis的Web验证服务",
+  "description": "MiaoEyes - Web爬虫防火墙工具，用于识别和阻止各类自动化程序访问",
   "main": "src/server/server.js",
+  "bin": {
+    "miaoeyes": "cli.js"
+  },
   "scripts": {
     "start": "node src/server/server.js",
     "dev": "nodemon src/server/server.js",
@@ -15,7 +18,7 @@
     "format": "prettier --write ."
   },
   "keywords": [
-    "ai-firewall",
+    "web-crawler-firewall", "anti-crawler", "bot-detection",
     "bot-detection",
     "captcha",
     "verification",
